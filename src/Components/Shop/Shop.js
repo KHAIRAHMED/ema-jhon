@@ -9,6 +9,7 @@ import { Link } from 'react-router-dom';
 const Shop = () => {
    const [products , setProducts] = useState(fakeData)
    const [cart ,setCart] = useState([])
+   console.log(setProducts)
 // fixed data in cart UI 
    useEffect(()=>{
     const selectedProduct = getDatabaseCart();
