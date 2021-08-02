@@ -1,0 +1,31 @@
+.product{
+    display: flex;
+    border-bottom: 1px solid lightgray;
+    margin-bottom: 5px;
+    /* padding: 5px; */
+    margin-right: 10px;
+    padding-bottom: 10px;
+}
+/* .product img{
+    width: 100%;
+} */
+.product-details{
+    margin-left: 20px;
+    padding-top: 10px;
+}
+.product-name{
+    color: blue;
+    font-weight: 400;
+}
+.main-button{
+    width: 150px;
+    height: 30px;
+    background-color: hsl(43, 74%, 49%);
+    border: 2px solid gray;  
+    border-radius: 5px;
+    cursor: pointer;
+}
+.main-button:hover{
+    /* border: 5px solid gray; */
+    background-color: rgb(220, 243, 220);
+}
