@@ -1,25 +1,36 @@
 import React, { useEffect, useState } from 'react';
 import Cart from '../../Cart/Cart';
-import fakeData from '../../fakeData';
 import { addToDatabaseCart, getDatabaseCart } from '../../utilities/databaseManager';
 import Product from '../Product/Product';
 import "./Shop.css"
 import { Link } from 'react-router-dom';
 
 const Shop = () => {
-   const [products , setProducts] = useState(fakeData)
+   const [products , setProducts] = useState([])
    const [cart ,setCart] = useState([])
-   console.log(setProducts)
+//    calling data from server 
+useEffect(()=>{
+    fetch("http://localhost:5000/products")
+    .then(res => res.json())
+    .then(data => {
+        setProducts(data)
+    })
+},[])
 // fixed data in cart UI 
    useEffect(()=>{
     const selectedProduct = getDatabaseCart();
     const productKeys = Object.keys(selectedProduct)
-    const products = productKeys.map(key => {
-       const findProducts = fakeData.find(pd => pd.key === key)
-       findProducts.quantity = selectedProduct[key]
-       return findProducts
+    fetch("http://localhost:5000/productByKeys",{
+        method : "POST",
+        headers :{
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(productKeys)
     })
-    setCart(products)
+    .then(res => res.json())
+    .then(data => {
+        setCart(data)
+    })
  },[])
  //    added quantity in cart
    const handleAddProduct = (product) => {

@@ -1,19 +1,14 @@
-import React, { isValidElement, useContext, useState } from 'react';
-import firebase from "firebase/app";
-import "firebase/auth";
+import React, { useContext, useState } from 'react';
 import "./Login.css";
-import firebaseConfig from './firebase.confing';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faGoogle, faGithub } from '@fortawesome/free-brands-svg-icons';
 import img from "./../../images/login.PNG"
 import { userContext } from '../../App';
 import { useHistory, useLocation } from 'react-router-dom';
-if (!firebase.apps.length) {
-  firebase.initializeApp(firebaseConfig);
-} else {
-  firebase.app();
-}
+import { createUserEmailAndPassword, handleGithubSignIn, handleGoogleSignIn, handleSignOut, initializeLoginFramework, signInEmailandPassword } from './LoginManager';
+
 const Login = () => {
+  initializeLoginFramework()
   const [user, setUser] = useState({
     isLoggedIn: false,
     name: "",
@@ -24,56 +19,47 @@ const Login = () => {
     photo : ''
   })
 
-  console.log(user.email);
+
   const [newUser, setNewUser] = useState(false)
   let history = useHistory();
   let location = useLocation();
   let { from } = location.state || { from: { pathname: "/" } };
   const [loggedInUser , setLoggedInUser] = useContext(userContext)
-  const googleProvider = new firebase.auth.GoogleAuthProvider(); //google provider
-  const githubProvider = new firebase.auth.GithubAuthProvider(); //github sign provider
-
-  // google sign start 
-  const handleGoogleSignIn = () => {
-    firebase.auth()
-      .signInWithPopup(googleProvider)
-      .then((result) => {
-        const userInfo = result.user;
-        const successfull = {...user}
-        successfull.error = ''
-        successfull.success = true
-        successfull.isLoggedIn = true
-        successfull.name = userInfo.displayName
-        successfull.email = userInfo.email
-        successfull.photo = userInfo.photoURL
-        setUser(successfull)
-        setLoggedInUser(successfull)
-        history.replace(from)
-      })
-      .catch((error) => {
-        const errorUser = {...user}
-        errorUser.error = error.message
-        errorUser.success = false
-        setUser(errorUser)
-      });
+  const handleResponse = (res , redirect)=>{
+    setUser(res)
+    setLoggedInUser(res)
+    if(redirect){
+      history.replace(from)
+    }
   }
-  // google sign end
+ 
+  // google sign in start 
+  const googleSignIn = ()=>{
+    handleGoogleSignIn()
+    .then(res =>{
+      handleResponse(res , true)
+    })
+  }
+  // google sign in start 
 
-  //google sign out start 
-  
-  const handleSignOut = ()=>{
-    console.log("signOut")
-    firebase.auth().signOut()
-    .then((res) => {
-      const signOutUser = {
-        isLoggedIn : false,
-        name :'',
-        email : '',
-        photo : '',
-      }
-      setUser(signOutUser)
-    })}
-  //google sign out start 
+// google sign out 
+
+const googleSignOut = ()=>{
+  handleSignOut()
+  .then(res => {
+    handleResponse(res , false)
+  })
+}
+// google sign out 
+
+// githubSignIn start 
+const gitHubSignIn = ()=>{
+  handleGithubSignIn()
+  .then(res =>{
+    handleResponse(res , true)
+  })
+}
+// githubSignIn start 
 
   // email sign up start 
   const handleBlur = (e) => {
@@ -93,88 +79,25 @@ const Login = () => {
 
   const handleSubmit = (e) => {
     // sign up 
-    const {email , password} = user
+    const {name ,email , password} = user
     if(newUser && email && password){
-      firebase.auth().createUserWithEmailAndPassword(email, password)
-  .then((userCredential) => {
-    var user = userCredential.user;
-    const successfull = {...user}
-    successfull.error = ''
-    successfull.success = true
-    updateName(user.name)
-    setUser(successfull)
-    setLoggedInUser(successfull)
-    history.replace(from)
-
-
-  })
-  .catch((error) => {
-    const errorUser = {...user}
-    errorUser.error = error.message
-    errorUser.success = false
-    setUser(errorUser)
-
-  });
+      createUserEmailAndPassword(name , email, password)
+      .then(res=>{
+        handleResponse(res , true)
+      })
     }
 // sign in 
 else if (!newUser && email && password){
-  firebase.auth().signInWithEmailAndPassword(email, password)
-  .then((userCredential) => {
-    const user = userCredential.user;
-    const successfull = {...user}
-    successfull.error = ''
-    successfull.success = true
-    setUser(successfull)
-    setLoggedInUser(successfull)
-    history.replace(from)
+  signInEmailandPassword(email , password)
+  .then(res =>{
+    handleResponse(res , true)
   })
-  .catch((error) => {
-    const errorUser = {...user}
-    errorUser.error = error.message
-    errorUser.success = false
-    setUser(errorUser)
-  });
-}
-const updateName = name =>{
-  const user = firebase.auth().currentUser;
-  user.updateProfile({
-  displayName: name,
-  })
-  .then((res) => {
-  })
-  .catch((error) => {
-  
-  });  
 }
     e.preventDefault()
 
   }
   // email sign up end 
 
-  // github sign in start 
-  const handleGithubSignIn = ()=>{
-    firebase
-  .auth()
-  .signInWithPopup(githubProvider)
-  .then((result) => {
-    const user = result.user;
-    const successfull = {...user}
-    successfull.error = ''
-    successfull.success = true
-    setUser(successfull)
-    setLoggedInUser(successfull)
-    history.replace(from)
-  })
-  .catch((error) => {
-    const errorUser = {...user}
-    errorUser.error = error.message
-    errorUser.success = false
-    setUser(errorUser)
-  });
-
-  }
-  // github sign in end 
-  
   return (
     <section className="loginOuter">
       <div className="imgBox">
@@ -214,8 +137,8 @@ const updateName = name =>{
             }
           <h3>Login with social media</h3>
           <ul className="sci">
-            <li ><FontAwesomeIcon onClick={handleGoogleSignIn} icon={faGoogle} /></li>
-            <li><FontAwesomeIcon onClick={handleGithubSignIn} icon={faGithub} /></li>
+            <li ><FontAwesomeIcon onClick={googleSignIn} icon={faGoogle} /></li>
+            <li><FontAwesomeIcon onClick={gitHubSignIn} icon={faGithub} /></li>
           </ul>
         </div>
       </div>
